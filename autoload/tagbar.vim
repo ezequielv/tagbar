@@ -3179,8 +3179,13 @@ endfunction
 function! s:save_winstate_before_going(...) abort
     let winnr_current = winnr()
     let winnr = (a:0 > 0 && a:1 > 0) ? a:1 : winnr_current
-    " we could save the current window number, the previous window, etc.
-    let saved_state = {}
+    " warning: the 'atsave_*' keys might become invalid after a window is
+    " either opened or closed.
+    let saved_state = {
+                \       'atsave_winnr_saved': winnr,
+                \       'atsave_winnr_current': winnr_current,
+                \       'atsave_winnr_prev': winnr('#'),
+                \   }
 
     if g:tagbar_vertical == 0
         let saved_state.winheight = winheight(winnr)
