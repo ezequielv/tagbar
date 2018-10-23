@@ -934,10 +934,7 @@ function! s:CorrectFocusOnStartup() abort
     if bufwinnr(s:TagbarBufName()) != -1 && !g:tagbar_autofocus && !s:last_autofocus
         let curfile = tagbar#state#get_current_file(1)
         if !empty(curfile) && curfile.fpath != fnamemodify(bufname('%'), ':p')
-            let winnr = bufwinnr(curfile.fpath)
-            if winnr != -1
-                call s:goto_win(winnr)
-            endif
+            call s:GotoFileWindow(curfile)
         endif
     endif
 endfunction
@@ -2770,31 +2767,23 @@ endfunction
 " the correct buffer in it.
 function! s:GetFileWinnr(fileinfo) abort
     let filewinnr = 0
-    let prevwinnr = winnr("#")
-
-    if winbufnr(prevwinnr) == a:fileinfo.bufnr &&
-     \ !getwinvar(prevwinnr, '&previewwindow')
-        let filewinnr = prevwinnr
-    else
-        " Search for the first real window that has the correct buffer loaded
-        " in it. Similar to bufwinnr() but skips the previewwindow.
-        for i in range(1, winnr('$'))
-            call s:goto_win(i, 1)
-            if bufnr('%') == a:fileinfo.bufnr && !&previewwindow
-                let filewinnr = winnr()
-                break
-            endif
-        endfor
-
-        call s:goto_tagbar(1)
-    endif
-
+    " Search for the first real window that has the correct buffer loaded
+    " in it. Similar to bufwinnr() but skips the previewwindow.
+    " Note: gives priority to the "previous" ('#') window.
+    for w in [winnr('#')] + range(1, winnr('$'))
+        if winbufnr(w) == a:fileinfo.bufnr && !getwinvar(w, '&previewwindow')
+            let filewinnr = w
+            break
+        endif
+    endfor
     return filewinnr
 endfunction
 
 " s:GotoFileWindow() {{{2
 " Try to switch to the window that has Tagbar's current file loaded in it, or
 " open the file in an existing window otherwise.
+" Pre-condition: the Tagbar window needs to be the "current" one.
+" If successful, the Tagbar window will be set as the "previous" ('#') one.
 function! s:GotoFileWindow(fileinfo, ...) abort
     let noauto = a:0 > 0 ? a:1 : 0
 
@@ -2802,22 +2791,29 @@ function! s:GotoFileWindow(fileinfo, ...) abort
 
     " If there is no window with the correct buffer loaded then load it
     " into the first window that has a non-special buffer in it.
+    " Note: gives priority to the "previous" ('#') window.
     if filewinnr == 0
-        for i in range(1, winnr('$'))
-            call s:goto_win(i, 1)
-            if &buftype == '' && !&previewwindow
+        for w in [winnr('#')] + range(1, winnr('$'))
+            if getwinvar(w, '&buftype') == '' && !getwinvar(w, '&previewwindow')
+                let filewinnr = w
+                " Go to this window directly, so the Tagbar window will be
+                " the "previous" ('#') one.
+                call s:goto_win(filewinnr, noauto)
                 execute 'buffer ' . a:fileinfo.bufnr
-                break
+                return filewinnr
             endif
         endfor
+        if filewinnr == 0
+            echoerr 'Tagbar: could not find a usable window to display'
+                        \ 'the file that this Tagbar window is for.'
+        endif
     else
-        call s:goto_win(filewinnr, 1)
+        " Go to this window directly, so the Tagbar window will be
+        " the "previous" ('#') one.
+        call s:goto_win(filewinnr, noauto)
+        return filewinnr
     endif
-
-    " To make ctrl-w_p work we switch between the Tagbar window and the
-    " correct window once
-    call s:goto_tagbar(noauto)
-    call s:goto_win('p', noauto)
+    return 0
 endfunction
 
 " s:ToggleHideNonPublicTags() {{{2
@@ -3172,13 +3168,16 @@ endfunction
 " Go to a previously marked window and delete the mark.
 function! s:goto_markedwin(...) abort
     let noauto = a:0 > 0 ? a:1 : 0
-    for window in range(1, winnr('$'))
-        call s:goto_win(window, noauto)
-        if exists('w:tagbar_mark')
+    " Note: gives priority to the "previous" ('#') window.
+    for w in [winnr('#')] + range(1, winnr('$'))
+        if !empty(getwinvar(w, 'tagbar_mark'))
+            call s:goto_win(w, noauto)
             unlet w:tagbar_mark
-            break
+            return
         endif
     endfor
+    echoerr 'Tagbar: Could not find a "marked" window to switch to.'
+                \ 'Please contact the script maintainer with an example.'
 endfunction
 
 " s:warning() {{{2
