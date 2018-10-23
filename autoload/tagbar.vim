@@ -3169,28 +3169,34 @@ function! s:goto_win(winnr, ...) abort
 endfunction
 
 " s:save_winstate_before_going() {{{2
+" Parameters (optional): winnr
+"
+" * winnr: defaults to zero, which also means "current"
+"
 " Returns a dictionary (treat it as an opaque type) with data that can be fed
 " to the s:restore_winstate_after_returning() function for the same window
 " (even though its winnr() might have changed).
-function! s:save_winstate_before_going() abort
+function! s:save_winstate_before_going(...) abort
+    let winnr_current = winnr()
+    let winnr = (a:0 > 0 && a:1 > 0) ? a:1 : winnr_current
     " we could save the current window number, the previous window, etc.
     let saved_state = {}
 
     if g:tagbar_vertical == 0
-        let saved_state.winheight = winheight(0)
+        let saved_state.winheight = winheight(winnr)
         if tagbar#debug#enabled()
             call tagbar#debug#log(
                         \ 'save_winstate_before_going(): ' .
                         \ 'saving height for window ' .
-                        \ winnr() . ': ' . saved_state.winheight . ' line(s)')
+                        \ winnr . ': ' . saved_state.winheight . ' line(s)')
         endif
     else
-        let saved_state.winwidth = winwidth(0)
+        let saved_state.winwidth = winwidth(winnr)
         if tagbar#debug#enabled()
             call tagbar#debug#log(
                         \ 'save_winstate_before_going(): ' .
                         \ 'saving width for window ' .
-                        \ winnr() . ': ' . saved_state.winwidth . ' column(s)')
+                        \ winnr . ': ' . saved_state.winwidth . ' column(s)')
         endif
     endif
 
