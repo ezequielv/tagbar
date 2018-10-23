@@ -3259,13 +3259,10 @@ function! s:mark_window(...) abort
     let winnr = (a:0 > 0 && a:1 > 0) ? a:1 : winnr_current
     let win_mark_id = a:0 > 1 ? a:2 : s:tagbar_mark_id_def
     if winnr > 0
-        " NOTE: setting a variable to a value differing from the existing one
-        " is silently supported by vim (tested on vim-7.0 and vim-7.4).
-        " prev: " TODO: remove previous variable value *for other windows*, which
-        " prev: " could be of a different type to the value being set.
-        " prev: if winnr == winnr_current
-        " prev:     unlet! w:tagbar_mark
-        " prev: endif
+        " NOTE: setting a variable to a value whose type differs from the
+        " existing one is silently supported by vim: the old value is
+        " overwritten without errors (unlike 'let's behaviour).
+        " (tested on vim-7.0 and vim-7.4).
         call setwinvar(winnr, 'tagbar_mark', win_mark_id)
     endif
     return winnr
