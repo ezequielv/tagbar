@@ -2821,6 +2821,7 @@ function! s:GotoFileWindow(fileinfo, ...) abort
         if filewinnr == 0
             echoerr 'Tagbar: could not find a usable window to display'
                         \ 'the file that this Tagbar window is for.'
+                        \ 'Please contact the script maintainer with an example.'
         endif
     else
         " Go to this window directly, so the Tagbar window will be
@@ -3168,6 +3169,9 @@ function! s:goto_win(winnr, ...) abort
 endfunction
 
 " s:save_winstate_before_going() {{{2
+" Returns a dictionary (treat it as an opaque type) with data that can be fed
+" to the s:restore_winstate_after_returning() function for the same window
+" (even though its winnr() might have changed).
 function! s:save_winstate_before_going() abort
     " we could save the current window number, the previous window, etc.
     let saved_state = {}
@@ -3203,7 +3207,6 @@ function! s:restore_winstate_after_returning(saved_state) abort
                         \ 'restoring height for window ' .
                         \ winnr() . ': ' . winheight . ' line(s)')
         endif
-        " prev: noautocmd execute winheight . 'wincmd _'
         execute 'noautocmd resize ' . winheight
     endif
     if has_key(a:saved_state, 'winwidth')
