@@ -2802,8 +2802,6 @@ function! s:GotoFileWindow(fileinfo, ...) abort
 
     let filewinnr = s:GetFileWinnr(a:fileinfo)
 
-    " TODO: MAYBE: have a single 'return' at the end instead.
-
     " If there is no window with the correct buffer loaded then load it
     " into the first window that has a non-special buffer in it.
     " Note: gives priority to the "previous" ('#') window.
@@ -2815,7 +2813,7 @@ function! s:GotoFileWindow(fileinfo, ...) abort
                 " the "previous" ('#') one.
                 call s:goto_win(filewinnr, noauto)
                 execute 'buffer ' . a:fileinfo.bufnr
-                return filewinnr
+                break
             endif
         endfor
         if filewinnr == 0
@@ -2826,9 +2824,8 @@ function! s:GotoFileWindow(fileinfo, ...) abort
         " Go to this window directly, so the Tagbar window will be
         " the "previous" ('#') one.
         call s:goto_win(filewinnr, noauto)
-        return filewinnr
     endif
-    return 0
+    return filewinnr
 endfunction
 
 " s:ToggleHideNonPublicTags() {{{2
