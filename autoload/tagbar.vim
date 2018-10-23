@@ -834,6 +834,8 @@ function! s:CloseWindow() abort
 
             close
 
+            " MAYBE: use s:GotoFileWindow(curfile) instead of the code below?
+            " (or maybe just inside the 'if !empty(curfile)' block).
             " Try to jump to the correct window after closing
             call s:goto_win('p')
 
@@ -2788,6 +2790,8 @@ function! s:GotoFileWindow(fileinfo, ...) abort
     let noauto = a:0 > 0 ? a:1 : 0
 
     let filewinnr = s:GetFileWinnr(a:fileinfo)
+
+    " TODO: MAYBE: have a single 'return' at the end instead.
 
     " If there is no window with the correct buffer loaded then load it
     " into the first window that has a non-special buffer in it.
