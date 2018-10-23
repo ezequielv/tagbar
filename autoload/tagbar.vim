@@ -3238,28 +3238,65 @@ function! s:goto_tagbar(...) abort
     call s:goto_win(bufwinnr(s:TagbarBufName()), noauto)
 endfunction
 
+" s:mark_window()/s:goto_markedwin() variables {{{2
+let s:tagbar_mark_id_def = 'mark_default'
+
 " s:mark_window() {{{2
-" Mark window with a window-local variable so we can jump back to it even if
-" the window numbers have changed.
-function! s:mark_window() abort
-    let w:tagbar_mark = 1
+" Mark the specified window (defaults to the current one) with a window-local
+" variable so we can jump back to it even if the window numbers have changed.
+"
+" Parameters (optional): winnr, mark_id
+"
+"  * winnr: defaults to the current window (winnr())
+"    Specifying 0 is another way to make this function use winnr().
+"
+"  * mark_id: defaults to s:tagbar_mark_id_def
+"
+" Returns the winnr of the window it placed a mark on, or zero if it could not
+" find a suitable one.
+function! s:mark_window(...) abort
+    let winnr_current = winnr()
+    let winnr = (a:0 > 0 && a:1 > 0) ? a:1 : winnr_current
+    let win_mark_id = a:0 > 1 ? a:2 : s:tagbar_mark_id_def
+    if winnr > 0
+        " NOTE: setting a variable to a value differing from the existing one
+        " is silently supported by vim (tested on vim-7.0 and vim-7.4).
+        " prev: " TODO: remove previous variable value *for other windows*, which
+        " prev: " could be of a different type to the value being set.
+        " prev: if winnr == winnr_current
+        " prev:     unlet! w:tagbar_mark
+        " prev: endif
+        call setwinvar(winnr, 'tagbar_mark', win_mark_id)
+    endif
+    return winnr
 endfunction
 
 " s:goto_markedwin() {{{2
 " Go to a previously marked window and delete the mark.
+" Parameters (optional): noauto, mark_id
+"
+"  * noauto: defaults to 0
+"
+"  * mark_id: defaults to s:tagbar_mark_id_def
+"
+" Returns the winnr of the window it switched to, or zero if it could not find
+" a suitable one.
 function! s:goto_markedwin(...) abort
     let noauto = a:0 > 0 ? a:1 : 0
-    " Note: gives priority to the "previous" ('#') window.
-    for w in [winnr('#')] + range(1, winnr('$'))
+    let win_mark_id = a:0 > 1 ? a:2 : s:tagbar_mark_id_def
+    let win_mark_id_type = type(win_mark_id)
+    " Note: gives priority to the "current" and "previous" ('#') windows.
+    for w in [winnr(), winnr('#')] + range(1, winnr('$'))
         if w == 0 | continue | endif
-        if !empty(getwinvar(w, 'tagbar_mark'))
+        unlet! v
+        let v = getwinvar(w, 'tagbar_mark')
+        if type(v) == win_mark_id_type && v ==# win_mark_id
             call s:goto_win(w, noauto)
             unlet w:tagbar_mark
-            return
+            return w
         endif
     endfor
-    echoerr 'Tagbar: Could not find a "marked" window to switch to.'
-                \ 'Please contact the script maintainer with an example.'
+    return 0
 endfunction
 
 " s:warning() {{{2
