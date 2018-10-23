@@ -857,9 +857,17 @@ function! s:CloseWindow() abort
         " won't bother with those in the "restore" phase -- we'll mark the
         " windows we're interested in instead.
 
-        "? let winnr_pprev = s:mark_window(winnr('#'), 'prev')
-        call s:mark_window(winnr('#'), 'prev')
-        " prev: let winnr_prev = s:mark_window()
+        " NOTE: if prevwinnr == tagbarwinnr, then the marking will work, but
+        " the corresponding 's:goto_markedwin() won't, as that window will be
+        " closed by then.  That's fine, too, and in that case the previously
+        " "current" window will still be made the "current" one, and it'll get
+        " the window that vim selects as the next one after the ':close'
+        " command has been executed as its "previous" one.
+        let prevwinnr = winnr('#')
+        " Only work on the "previous" window if there is one.
+        if prevwinnr > 0
+            call s:mark_window(prevwinnr, 'prev')
+        endif
         " Mark the "current" window.
         call s:mark_window()
 
@@ -870,9 +878,13 @@ function! s:CloseWindow() abort
 
         " Jump to the "previous" window first (so it'll be the original
         " window's "previous" window again).
-        " Note: if there wasn't a "previous" window originally, this is a
-        " no-op, as there will be no windows with the expected "mark_id".
-        call s:goto_markedwin(0, 'prev')
+        if prevwinnr > 0
+            " Note: as stated above, this might fail if prevwinnr ==
+            " tagbarwinnr (although the numbers would have changed by this
+            " point), but that's to be expected in that case.  That's why we
+            " won't bother with checking that this operation succeeded here.
+            call s:goto_markedwin(0, 'prev')
+        endif
         " Jump to the original window.
         call s:goto_markedwin()
         call s:restore_winstate_after_returning(window_saved_state)
