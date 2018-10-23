@@ -250,6 +250,7 @@ function! s:RestoreSession() abort
 
     let in_tagbar = 1
     if winnr() != tagbarwinnr
+        let window_saved_state = s:save_winstate_before_going()
         call s:goto_win(tagbarwinnr, 1)
         let in_tagbar = 0
     endif
@@ -264,6 +265,7 @@ function! s:RestoreSession() abort
 
     if !in_tagbar
         call s:goto_win('p')
+        call s:restore_winstate_after_returning(window_saved_state)
     endif
 endfunction
 
@@ -645,6 +647,7 @@ function! s:OpenWindow(flags) abort
         return
     endif
 
+    let window_saved_state = s:save_winstate_before_going()
     " Use the window ID if the functionality exists, this is more reliable
     " since the window number can change due to the Tagbar window opening
     if exists('*win_getid')
@@ -662,6 +665,7 @@ function! s:OpenWindow(flags) abort
             call s:goto_win('p', 1)
         endif
     endif
+    call s:restore_winstate_after_returning(window_saved_state)
 
     " This is only needed for the CorrectFocusOnStartup() function
     let s:last_autofocus = autofocus
@@ -730,6 +734,7 @@ function! s:OpenWindow(flags) abort
                 call s:goto_win(prevwinnr)
             endif
         endif
+        call s:restore_winstate_after_returning(window_saved_state)
     endif
 
     call tagbar#debug#log('OpenWindow finished')
@@ -851,6 +856,7 @@ function! s:CloseWindow() abort
             endif
         endif
     else
+        let window_saved_state = s:save_winstate_before_going()
         " Go to the tagbar window, close it and then come back to the original
         " window. Save a win-local variable in the original window so we can
         " jump back to it even if the window number changed.
@@ -859,6 +865,7 @@ function! s:CloseWindow() abort
         close
 
         call s:goto_markedwin()
+        call s:restore_winstate_after_returning(window_saved_state)
     endif
 
     call s:ShrinkIfExpanded()
@@ -1589,6 +1596,7 @@ function! s:RenderContent(...) abort
         let in_tagbar = 1
     else
         let in_tagbar = 0
+        let window_saved_state = s:save_winstate_before_going()
         let prevwinnr = winnr()
 
         " Get the previous window number, so that we can reproduce
@@ -1671,6 +1679,7 @@ function! s:RenderContent(...) abort
     if !in_tagbar
         call s:goto_win(pprevwinnr, 1)
         call s:goto_win(prevwinnr, 1)
+        call s:restore_winstate_after_returning(window_saved_state)
     endif
 endfunction
 
@@ -1906,6 +1915,7 @@ function! s:HighlightTag(openfolds, ...) abort
         let in_tagbar = 1
     else
         let in_tagbar = 0
+        let window_saved_state = s:save_winstate_before_going()
         let prevwinnr = winnr()
         call s:goto_win('p', 1)
         let pprevwinnr = winnr()
@@ -1951,6 +1961,7 @@ function! s:HighlightTag(openfolds, ...) abort
         if !in_tagbar
             call s:goto_win(pprevwinnr, 1)
             call s:goto_win(prevwinnr, 1)
+            call s:restore_winstate_after_returning(window_saved_state)
         endif
         redraw
     endtry
@@ -2935,6 +2946,7 @@ function! s:SetStatusLine()
     " Make sure we're actually in the Tagbar window
     if tagbarwinnr != winnr()
         let in_tagbar = 0
+        let window_saved_state = s:save_winstate_before_going()
         let prevwinnr = winnr()
         call s:goto_win('p', 1)
         let pprevwinnr = winnr()
@@ -2975,6 +2987,7 @@ function! s:SetStatusLine()
     if !in_tagbar
         call s:goto_win(pprevwinnr, 1)
         call s:goto_win(prevwinnr, 1)
+        call s:restore_winstate_after_returning(window_saved_state)
     endif
 endfunction
 
