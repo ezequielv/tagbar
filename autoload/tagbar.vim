@@ -838,13 +838,13 @@ function! s:CloseWindow() abort
             let prevwinnr = winnr('#')
             if prevwinnr > 0
                 let window_saved_state = s:save_winstate_before_going(prevwinnr)
-                " (see notes in the 'else' sentence block)
+                " (see notes in the main 'else' sentence block)
                 call s:mark_window(prevwinnr, 'prev')
             endif
 
             close
 
-            " (see notes in the 'else' sentence block)
+            " (see notes in the main 'else' sentence block)
             if prevwinnr > 0
                 call s:goto_markedwin(0, 'prev')
                 call s:restore_winstate_after_returning(window_saved_state)
@@ -852,15 +852,15 @@ function! s:CloseWindow() abort
         endif
     else
         let window_saved_state = s:save_winstate_before_going()
-        " Note: we won't care if there *was* a "previous" window or not (see
-        " code below), but we'll try to restore that as a "previous" window
-        " after closing the Tagbar window.
-        " We should not save the window numbers, as the numbers can change
-        " after closing a window.  By marking them, we can find them right
-        " after closing the Tagbar window.
+
+        " NOTE: as window numbers change when windows are open or closed, we
+        " won't bother with those in the "restore" phase -- we'll mark the
+        " windows we're interested in instead.
+
         "? let winnr_pprev = s:mark_window(winnr('#'), 'prev')
         call s:mark_window(winnr('#'), 'prev')
         " prev: let winnr_prev = s:mark_window()
+        " Mark the "current" window.
         call s:mark_window()
 
         " Go to the tagbar window, close it and then come back to the original
