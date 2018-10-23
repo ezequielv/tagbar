@@ -835,24 +835,19 @@ function! s:CloseWindow() abort
         if winbufnr(2) != -1
             " Other windows are open, only close the tagbar one
 
-            let curfile = tagbar#state#get_current_file(0)
+            let prevwinnr = winnr('#')
+            if prevwinnr > 0
+                let window_saved_state = s:save_winstate_before_going(prevwinnr)
+                " (see notes in the 'else' sentence block)
+                call s:mark_window(prevwinnr, 'prev')
+            endif
 
             close
 
-            " MAYBE: use s:GotoFileWindow(curfile) instead of the code below?
-            " (or maybe just inside the 'if !empty(curfile)' block).
-            " Try to jump to the correct window after closing
-            call s:goto_win('p')
-
-            if !empty(curfile)
-                let filebufnr = bufnr(curfile.fpath)
-
-                if bufnr('%') != filebufnr
-                    let filewinnr = bufwinnr(filebufnr)
-                    if filewinnr != -1
-                        call s:goto_win(filewinnr)
-                    endif
-                endif
+            " (see notes in the 'else' sentence block)
+            if prevwinnr > 0
+                call s:goto_markedwin(0, 'prev')
+                call s:restore_winstate_after_returning(window_saved_state)
             endif
         endif
     else
