@@ -2784,6 +2784,7 @@ function! s:GetFileWinnr(fileinfo) abort
     " in it. Similar to bufwinnr() but skips the previewwindow.
     " Note: gives priority to the "previous" ('#') window.
     for w in [winnr('#')] + range(1, winnr('$'))
+        if w == 0 | continue | endif
         if winbufnr(w) == a:fileinfo.bufnr && !getwinvar(w, '&previewwindow')
             let filewinnr = w
             break
@@ -2807,6 +2808,7 @@ function! s:GotoFileWindow(fileinfo, ...) abort
     " Note: gives priority to the "previous" ('#') window.
     if filewinnr == 0
         for w in [winnr('#')] + range(1, winnr('$'))
+            if w == 0 | continue | endif
             if getwinvar(w, '&buftype') == '' && !getwinvar(w, '&previewwindow')
                 let filewinnr = w
                 " Go to this window directly, so the Tagbar window will be
@@ -3235,6 +3237,7 @@ function! s:goto_markedwin(...) abort
     let noauto = a:0 > 0 ? a:1 : 0
     " Note: gives priority to the "previous" ('#') window.
     for w in [winnr('#')] + range(1, winnr('$'))
+        if w == 0 | continue | endif
         if !empty(getwinvar(w, 'tagbar_mark'))
             call s:goto_win(w, noauto)
             unlet w:tagbar_mark
