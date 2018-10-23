@@ -3155,6 +3155,57 @@ function! s:goto_win(winnr, ...) abort
     endif
 endfunction
 
+" s:save_winstate_before_going() {{{2
+function! s:save_winstate_before_going() abort
+    " we could save the current window number, the previous window, etc.
+    let saved_state = {}
+
+    if g:tagbar_vertical == 0
+        let saved_state.winheight = winheight(0)
+        if tagbar#debug#enabled()
+            call tagbar#debug#log(
+                        \ 'save_winstate_before_going(): ' .
+                        \ 'saving height for window ' .
+                        \ winnr() . ': ' . saved_state.winheight . ' line(s)')
+        endif
+    else
+        let saved_state.winwidth = winwidth(0)
+        if tagbar#debug#enabled()
+            call tagbar#debug#log(
+                        \ 'save_winstate_before_going(): ' .
+                        \ 'saving width for window ' .
+                        \ winnr() . ': ' . saved_state.winwidth . ' column(s)')
+        endif
+    endif
+
+    return saved_state
+endfunction
+
+" s:restore_winstate_after_returning() {{{2
+function! s:restore_winstate_after_returning(saved_state) abort
+    if has_key(a:saved_state, 'winheight')
+        let winheight = a:saved_state.winheight
+        if tagbar#debug#enabled()
+            call tagbar#debug#log(
+                        \ 'restore_winstate_after_returning(): ' .
+                        \ 'restoring height for window ' .
+                        \ winnr() . ': ' . winheight . ' line(s)')
+        endif
+        " prev: noautocmd execute winheight . 'wincmd _'
+        execute 'noautocmd resize ' . winheight
+    endif
+    if has_key(a:saved_state, 'winwidth')
+        let winwidth = a:saved_state.winwidth
+        if tagbar#debug#enabled()
+            call tagbar#debug#log(
+                        \ 'restore_winstate_after_returning(): ' .
+                        \ 'restoring width for window ' .
+                        \ winnr() . ': ' . winwidth . ' column(s)')
+        endif
+        execute 'noautocmd vertical resize ' . winwidth
+    endif
+endfunction
+
 " s:goto_tagbar() {{{2
 function! s:goto_tagbar(...) abort
     let noauto = a:0 > 0 ? a:1 : 0
