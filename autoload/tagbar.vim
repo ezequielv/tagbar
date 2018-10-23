@@ -857,13 +857,28 @@ function! s:CloseWindow() abort
         endif
     else
         let window_saved_state = s:save_winstate_before_going()
-        " Go to the tagbar window, close it and then come back to the original
-        " window. Save a win-local variable in the original window so we can
-        " jump back to it even if the window number changed.
+        " Note: we won't care if there *was* a "previous" window or not (see
+        " code below), but we'll try to restore that as a "previous" window
+        " after closing the Tagbar window.
+        " We should not save the window numbers, as the numbers can change
+        " after closing a window.  By marking them, we can find them right
+        " after closing the Tagbar window.
+        "? let winnr_pprev = s:mark_window(winnr('#'), 'prev')
+        call s:mark_window(winnr('#'), 'prev')
+        " prev: let winnr_prev = s:mark_window()
         call s:mark_window()
+
+        " Go to the tagbar window, close it and then come back to the original
+        " window.
         call s:goto_win(tagbarwinnr)
         close
 
+        " Jump to the "previous" window first (so it'll be the original
+        " window's "previous" window again).
+        " Note: if there wasn't a "previous" window originally, this is a
+        " no-op, as there will be no windows with the expected "mark_id".
+        call s:goto_markedwin(0, 'prev')
+        " Jump to the original window.
         call s:goto_markedwin()
         call s:restore_winstate_after_returning(window_saved_state)
     endif
